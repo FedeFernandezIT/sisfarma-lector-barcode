@@ -485,8 +485,20 @@ namespace Lector.Sharp.Wpf
             var character = kc.ConvertToString(key)?.Replace("NumPad", string.Empty);
 
             // Por alguna razón al convertir en string puede tirar el valor ascii en decimal
-            if (character.Length > 1 && int.TryParse(character, out var asciiDecimal))            
-                character = "" + (char)Convert.ToByte(asciiDecimal);            
+            //if (character.Length > 1 && int.TryParse(character, out var asciiDecimal))
+            //    character = "" + (char)Convert.ToByte(asciiDecimal);
+
+            // Por alguna razón al convertir en string puede tirar el valor ascii en decimal
+            var ascii = "" + character;
+            if (ascii.Length > 1)
+            {
+                character = string.Empty;
+                var numero = "" + ascii[0] + ascii[1];
+                if (int.TryParse(numero, out var asciiDecimal))
+                {
+                    character += "" + (char)Convert.ToByte(asciiDecimal);
+                }
+            }            
 
             _keyData += character;
         }
