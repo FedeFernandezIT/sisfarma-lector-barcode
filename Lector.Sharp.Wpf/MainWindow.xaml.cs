@@ -22,6 +22,8 @@ namespace Lector.Sharp.Wpf
     /// </summary>
     public partial class MainWindow : Window
     {
+        const string CRLF_ASCII_VALUE = "0013";
+
         /// <summary>
         /// Listener que escucha cada vez que se presiona una tecla.
         /// </summary>
@@ -224,7 +226,8 @@ namespace Lector.Sharp.Wpf
             try
             {
                 if (e.KeyPressed != Key.Enter &&
-                    !(_listener.IsHardwareKeyDown(LowLevelKeyboardListener.VirtualKeyStates.VK_CONTROL) && e.KeyPressed == Key.M))
+                    !(_listener.IsHardwareKeyDown(LowLevelKeyboardListener.VirtualKeyStates.VK_CONTROL) && e.KeyPressed == Key.M) &&
+                    !IsKeyValue(e.KeyPressed, CRLF_ASCII_VALUE))
                 {
                     #region Low level Keyboard for HotKey
 
@@ -486,6 +489,14 @@ namespace Lector.Sharp.Wpf
                 character = "" + (char)Convert.ToByte(asciiDecimal);            
 
             _keyData += character;
+        }
+
+        private bool IsKeyValue(Key key, string value)
+        {
+            var kc = new KeyConverter();
+            var keyValue = kc.ConvertToString(key)?.Replace("NumPad", string.Empty);
+
+            return keyValue == value;
         }
 
         /// <summary>
