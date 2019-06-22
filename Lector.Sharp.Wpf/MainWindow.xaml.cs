@@ -41,6 +41,7 @@ namespace Lector.Sharp.Wpf
         /// Almacena el valor de las teclas presionadas, específcamente números.
         /// </summary>
         private string _keyData = string.Empty;
+        private int _keyDataCount = 0;
 
         /// <summary>
         /// Window para mostrar información de la base de datos.
@@ -255,7 +256,8 @@ namespace Lector.Sharp.Wpf
                 else if (!CustomBrowser.IsActive && !string.IsNullOrEmpty(_keyData))
                 {
                     var entryData = _keyData;
-                    Task.Run(() => ProccessEnterKey(entryData)).ContinueWith(t =>
+                    var entryDataCount = _keyDataCount;
+                    Task.Run(() => ProccessEnterKey(entryData, entryDataCount)).ContinueWith(t =>
                     {
                         if (t.Result)
                         {
@@ -265,6 +267,7 @@ namespace Lector.Sharp.Wpf
 
                     // Limpiamos _keyData para otro proceso.
                     _keyData = string.Empty;
+                    _keyDataCount = 0;
                     // SendKeyEnter();
                 }
                 else
@@ -289,9 +292,28 @@ namespace Lector.Sharp.Wpf
         /// <summary>
         /// Procesa los _keyData para buscar datos en la base de datos
         /// </summary>
-        private bool ProccessEnterKey(string entryData)
-        {            
-            var entryBarCode = entryData;
+        private bool ProccessEnterKey(string entryData, int entryDataCount)
+        {
+            string entryValidated = string.Empty;
+            if (entryData.Length == entryDataCount * 2)
+            {                
+                for (int i = 0; i < entryData.Length; i = i + 2)
+                {
+                    var numero = "" + entryData[i] + entryData[i + 1];
+
+                    if (int.TryParse(numero, out var asciiDecimal))
+                    {
+                        entryValidated += "" + (char)Convert.ToByte(asciiDecimal);
+                    }
+                }
+            }
+            else
+            {
+                entryValidated = entryData;
+            }
+            
+
+            var entryBarCode = entryValidated;
             if (QRCode.TryParse(entryData, out QRCode qr))
                 entryBarCode = qr.BarCode;
 
@@ -479,28 +501,29 @@ namespace Lector.Sharp.Wpf
         /// </summary>
         /// <param name="key">Tecla presionada</param>
         private void StoreKey(Key key)
-        {
+        {            
             // Key.NumPad# se convierte en 'NumPad#' por lo cual lo eliminamos
             var kc = new KeyConverter();
             var character = kc.ConvertToString(key)?.Replace("NumPad", string.Empty);
 
             // Por alguna razón al convertir en string puede tirar el valor ascii en decimal
-            //if (character.Length > 1 && int.TryParse(character, out var asciiDecimal))
-            //    character = "" + (char)Convert.ToByte(asciiDecimal);
+            if (character.Length > 1 && int.TryParse(character, out var asciiDecimal))
+                character = "" + (char)Convert.ToByte(asciiDecimal);
 
             // Por alguna razón al convertir en string puede tirar el valor ascii en decimal
-            var ascii = "" + character;
-            if (ascii.Length > 1)
-            {
-                character = string.Empty;
-                var numero = "" + ascii[0] + ascii[1];
-                if (int.TryParse(numero, out var asciiDecimal))
-                {
-                    character += "" + (char)Convert.ToByte(asciiDecimal);
-                }
-            }            
+            //var ascii = "" + character;
+            //if (ascii.Length > 1)
+            //{
+            //    character = string.Empty;
+            //    var numero = "" + ascii[0] + ascii[1];
+            //    if (int.TryParse(numero, out var asciiDecimal))
+            //    {
+            //        character += "" + (char)Convert.ToByte(asciiDecimal);
+            //    }
+            //}            
 
             _keyData += character;
+            _keyDataCount++;
         }
 
         private bool IsKeyValue(Key key, string value)
